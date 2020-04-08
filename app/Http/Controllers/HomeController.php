@@ -11,6 +11,7 @@ use PDF;
  
 use App\Models\PermintaanBarang;
 use App\Models\Schedule;
+use App\Models\VScheduleCustomer;
 
 class HomeController extends Controller
 {
@@ -29,7 +30,28 @@ class HomeController extends Controller
      *
      * @return \Illuminate\Contracts\Support\Renderable
      */
-    public function index(Request $request){
+    public function index(){
+		$year = now()->year;
+		$model = VScheduleCustomer::with("users")
+		->whereYear('date_start', '=', $year)
+		->orderBy('id','DESC')
+        ->get();
+		$res = [];
+		foreach($model as $key => $k){
+			
+			$description = '<p>';
+			foreach($k->users as $k2){
+				$description .= $k2->name." (".$k2->indentity_number.")\n";
+			}
+			$description .= '</p>';
+			$res[] = ["title" => 'BA-'.sprintf("%010d", $k->id).' - '.$k->code , "allday" => false , "customer" => $k->name , "borderColor" => '#'.$k->color , 'description' => $description , 'start' => $k->date_start , 'mulai' => $k->date_start , 'end' => $k->date_finish  , 'selesai' => $k->date_finish , 'address' => $k->address];
+			
+		}
+		return view('home',['model' => $res]);
+	}
+	
+	
+    public function chartJadwal(Request $request){
         $year = now()->year;
         if($request->year){
             $year = $request->year;
